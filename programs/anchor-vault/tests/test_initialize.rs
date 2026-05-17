@@ -1,6 +1,6 @@
 
 use {
-    anchor_lang::{AccountDeserialize, InstructionData, ToAccountMetas, solana_program::{instruction::Instruction, msg}, system_program::ID as SYSTEM_PROGRAM_ID}, litesvm::LiteSVM, solana_keypair::Keypair, solana_message::{Message, VersionedMessage}, solana_pubkey::Pubkey, solana_signer::Signer, solana_transaction::{Transaction, versioned::VersionedTransaction}
+    anchor_lang::{AccountDeserialize, InstructionData, ToAccountMetas, solana_program::{instruction::Instruction, msg}, system_program::ID as SYSTEM_PROGRAM_ID}, litesvm::LiteSVM, solana_keypair::Keypair, solana_message::{Message}, solana_pubkey::Pubkey, solana_signer::Signer, solana_transaction::{Transaction}
 };
 
 fn setup() -> (LiteSVM, Keypair) {
@@ -49,7 +49,7 @@ fn test_initialize_deposit_withdraw_close() {
     msg!("Initialize transaction successful");
     msg!("Tx Signature: {}", tx1.signature);
 
-    // assertions
+    // Assert
     let vault_state_account = svm.get_account(&vault_state_pda).unwrap();
     let vault_state = 
         anchor_vault::state::VaultState::try_deserialize(&mut vault_state_account.data.as_ref()).unwrap();
@@ -83,11 +83,6 @@ fn test_initialize_deposit_withdraw_close() {
     msg!("Deposit transaction successful");
     msg!("Deposit Tx Signature: {}", deposit_tx.signature);
 
-
-    let vault_state_account = svm.get_account(&vault_state_pda).unwrap();
-    let vault_state = 
-        anchor_vault::state::VaultState::try_deserialize(&mut vault_state_account.data.as_ref()).unwrap();
-
     let vault_balance_after_deposit = svm.get_balance(&vault_pda).unwrap();
 
     // assert
@@ -119,11 +114,6 @@ fn test_initialize_deposit_withdraw_close() {
 
     msg!("Withdraw transaction successful");
     msg!("Withdraw Tx Signature: {}", withdraw_tx.signature);
-
-
-    let vault_state_account = svm.get_account(&vault_state_pda).unwrap();
-    let vault_state = 
-        anchor_vault::state::VaultState::try_deserialize(&mut vault_state_account.data.as_ref()).unwrap();
 
     let vault_balance_after_withdraw = svm.get_balance(&vault_pda).unwrap();
 
