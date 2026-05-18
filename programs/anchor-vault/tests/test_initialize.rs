@@ -155,3 +155,12 @@ fn test_initialize_deposit_withdraw_close() {
     msg!("Balance after close: {}", user_balance_after_close);
 
 }
+
+// #[test]
+// fn test_init_and_deposit_more_than_in_user_account(){
+
+//     let (mut svm, payer) = setup();
+//     let user = payer.pubkey();
+//     let (vault_state_pda, state_bump) = Pubkey::find_program_address(seeds, program_id)
+
+// }

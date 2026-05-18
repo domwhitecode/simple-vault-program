@@ -1,5 +1,5 @@
 use anchor_lang::{prelude::*, system_program::{transfer, Transfer}};
-use crate::state::VaultState;
+use crate::{STATE_SEED, VAULT_SEED, state::VaultState};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -9,14 +9,14 @@ pub struct Withdraw<'info> {
 
     #[account(
         mut,
-        seeds = [b"vault", vault_state.key().as_ref()],
+        seeds = [VAULT_SEED, vault_state.key().as_ref()],
         bump = vault_state.vault_bump // use bump saved on state
 
     )]
     pub vault: SystemAccount<'info>, 
 
     #[account(
-        seeds = [b"state", user.key().as_ref()],
+        seeds = [STATE_SEED, user.key().as_ref()],
         bump = vault_state.state_bump
     )]
     pub vault_state: Account<'info, VaultState>,
@@ -36,7 +36,7 @@ impl<'info>Withdraw<'info> {
         // we need the vault to sign for itself and therefore must 
         // derive a PDA for the vault to sign the transaction
         let seeds =  &[
-            b"vault",
+            VAULT_SEED,
             self.vault_state.to_account_info().key.as_ref(),
             &[self.vault_state.vault_bump],
         ];

@@ -11,6 +11,7 @@ pub use state::*;
 
 declare_id!("8d8aW4TGCQhzvkWkTs8nGM4XdjF36yY7Kwz13Sbm2g4g");
 
+// lib.rs acts as the entry point to the program in an anchor program 
 #[program]
 pub mod anchor_vault {
     use super::*;
