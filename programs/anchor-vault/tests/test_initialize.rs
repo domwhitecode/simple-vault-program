@@ -219,11 +219,20 @@ fn test_deposit_more_than_balance_fails(){
     let deposit_transaction = Transaction::new(&[&payer], message, recent_blockhash);
     let deposit_result = svm.send_transaction(deposit_transaction);
 
-    assert!(deposit_result.is_err(), "Deposit should fail due to insufficient funds");
+    // assert the transaction failed due to insufficient lamports
+    let err = deposit_result.unwrap_err();
+    assert!(
+        err.meta.logs.iter().any(|l| l.contains("insufficient lamports")),
+        "expected insufficient-lamports failure, got logs: {:#?}",
+        err.meta.logs
+    );
 
-    // balance should be less than initial due to gas 
-    assert_ne!(svm.get_balance(&user).unwrap(), ONE_SOL * 10);
+    // balance should be less than initial balance due to gas 
+    assert!(svm.get_balance(&user).unwrap() < ONE_SOL * 10);
 
-    //
+    // vault balance should still be 0 
+    assert_eq!(svm.get_balance(&vault_pda).unwrap(), 0, "vault should be untouched");
+
+
 
 }
