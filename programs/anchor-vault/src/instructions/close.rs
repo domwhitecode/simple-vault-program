@@ -37,7 +37,7 @@ impl<'info>Close<'info> {
         // we need the vault to sign for itself and therefore must 
         // derive a PDA for the vault to sign the transaction
         let seeds =  &[
-            b"vault",
+            VAULT_SEED.as_ref(),
             self.vault_state.to_account_info().key.as_ref(),
             &[self.vault_state.vault_bump],
         ];
