@@ -53,12 +53,6 @@ anchor build
 cargo test
 ```
 
-### Why not `anchor test`?
-
-`anchor test` boots a local validator (Surfpool in Anchor 0.31+), deploys the program to it, then runs the script in `[scripts] test`. That workflow is for TypeScript tests that talk to a real validator over RPC. LiteSVM loads the `.so` directly via `include_bytes!` at compile time — there's nothing to deploy and no validator to connect to. Skip `anchor test` and just run `cargo test`.
-
-If you ever need the validator workflow (e.g., for TS integration tests), use `anchor test --skip-local-validator` against a separately-running validator.
-
 ## Tests
 
 `tests/test_vault.rs` covers:
