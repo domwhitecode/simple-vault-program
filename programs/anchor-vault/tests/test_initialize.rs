@@ -1,6 +1,6 @@
 
 use {
-    anchor_lang::{AccountDeserialize, InstructionData, ToAccountMetas, solana_program::{instruction::Instruction, msg}, system_program::ID as SYSTEM_PROGRAM_ID}, litesvm::LiteSVM, solana_keypair::Keypair, solana_message::{Message}, solana_pubkey::Pubkey, solana_signer::Signer, solana_transaction::{Transaction}
+    anchor_lang::{AccountDeserialize, InstructionData, ToAccountMetas, solana_program::{instruction::Instruction, msg}, system_program::ID as SYSTEM_PROGRAM_ID}, anchor_vault::{ONE_SOL, STATE_SEED, VAULT_SEED}, litesvm::LiteSVM, solana_keypair::Keypair, solana_message::Message, solana_pubkey::Pubkey, solana_signer::Signer, solana_transaction::Transaction
 };
 
 fn setup() -> (LiteSVM, Keypair) {
@@ -156,11 +156,74 @@ fn test_initialize_deposit_withdraw_close() {
 
 }
 
-// #[test]
-// fn test_init_and_deposit_more_than_in_user_account(){
+#[test]
+fn test_deposit_more_than_balance_fails(){
 
-//     let (mut svm, payer) = setup();
-//     let user = payer.pubkey();
-//     let (vault_state_pda, state_bump) = Pubkey::find_program_address(seeds, program_id)
+    let (mut svm, payer) = setup();
+    let user = payer.pubkey();
+    let (vault_state_pda, state_bump) = 
+        Pubkey::find_program_address(&[STATE_SEED, user.as_ref()], &anchor_vault::id());
+    let (vault_pda, vault_bump) = 
+        Pubkey::find_program_address(&[VAULT_SEED, vault_state_pda.as_ref()], &anchor_vault::id());
+    
+    // Initialize vault for user
+    let init_ix = Instruction{
+        program_id: anchor_vault::id(),
+        accounts: anchor_vault::accounts::Initialize{
+            user,
+            vault_state: vault_state_pda,
+            vault: vault_pda,
+            system_program: SYSTEM_PROGRAM_ID
+        }.to_account_metas(None),
+        data: anchor_vault::instruction::Initialize {}.data()
+    };
 
-// }
+    // build and send the transaction
+    let message = Message::new(&[init_ix], Some(&payer.pubkey()));
+    let recent_blockhash = svm.latest_blockhash();
+    let transaction = Transaction::new(&[&payer], message, recent_blockhash);
+    let tx1 = svm.send_transaction(transaction).unwrap();
+
+    msg!("Initialize transaction successful");
+    msg!("Tx Signature: {}", tx1.signature);
+
+    // Assert
+    let vault_state_account = svm.get_account(&vault_state_pda).unwrap();
+    let vault_state = 
+        anchor_vault::state::VaultState::try_deserialize(&mut vault_state_account.data.as_ref()).unwrap();
+    
+    assert_eq!(vault_state.vault_bump, vault_bump);
+    assert_eq!(vault_state.state_bump, state_bump);
+
+
+    // deposit more than in account 
+    // user has 10 sol from setup() function 
+    let deposit_amount: u64 = ONE_SOL * 11; // 11 sol
+
+    let deposit_ix = Instruction {
+        program_id: anchor_vault::id(),
+        accounts: anchor_vault::accounts::Deposit {
+            user,
+            vault_state: vault_state_pda,
+            vault: vault_pda,
+            system_program: SYSTEM_PROGRAM_ID
+        }.to_account_metas(None),
+        data: anchor_vault::instruction::Deposit {
+            amount: deposit_amount
+        }.data()
+    };
+
+    // build and send the transaction
+    let message = Message::new(&[deposit_ix], Some(&payer.pubkey()));
+    let recent_blockhash = svm.latest_blockhash();
+    let deposit_transaction = Transaction::new(&[&payer], message, recent_blockhash);
+    let deposit_result = svm.send_transaction(deposit_transaction);
+
+    assert!(deposit_result.is_err(), "Deposit should fail due to insufficient funds");
+
+    // balance should be less than initial due to gas 
+    assert_ne!(svm.get_balance(&user).unwrap(), ONE_SOL * 10);
+
+    //
+
+}
